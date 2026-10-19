@@ -1,0 +1,653 @@
+Awesome! 🎉 Here's the complete documentation for JonRod:
+
+---
+
+# JonRod Language Documentation
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Getting Started](#getting-started)
+3. [Basic Syntax](#basic-syntax)
+4. [Data Types](#data-types)
+5. [Variables](#variables)
+6. [Operators](#operators)
+7. [Control Flow](#control-flow)
+8. [Functions](#functions)
+9. [Arrays](#arrays)
+10. [Objects](#objects)
+11. [File I/O](#file-io)
+12. [System Commands](#system-commands)
+13. [HTTP Client](#http-client)
+14. [JSON Operations](#json-operations)
+15. [String Operations](#string-operations)
+16. [Time Functions](#time-functions)
+17. [Environment Variables](#environment-variables)
+18. [Error Handling](#error-handling)
+19. [REPL Commands](#repl-commands)
+20. [Command Line Options](#command-line-options)
+
+---
+
+## Overview
+
+JonRod is a minimal but practical scripting language designed for:
+- System automation
+- File processing
+- Web API interaction
+- Quick scripting tasks
+- Educational purposes
+
+**Design Philosophy:**
+- Everything is a list `[command arg1 arg2 ...]`
+- Simple syntax, no semicolons or braces
+- Dynamic typing with optional type annotations
+- Built-in system capabilities
+
+---
+
+## Getting Started
+
+### Running a Script
+```bash
+# Run a JonRod file
+jonrod script.jr
+
+# Check syntax only
+jonrod -c script.jr
+
+# Dump AST (debugging)
+jonrod -d script.jr
+
+# Evaluate expression directly
+jonrod -e '[println "Hello World"]'
+
+# Start REPL
+jonrod
+```
+
+### Hello World
+```scheme
+[println "Hello World"]
+```
+
+---
+
+## Basic Syntax
+
+### Comments
+```scheme
+# This is a comment
+[set x 42]  # Inline comment
+```
+
+### Everything is a List
+```scheme
+[command arg1 arg2 ...]
+```
+
+### Parentheses for grouping
+```scheme
+[add [mult 2 3] 4]  # (2 * 3) + 4
+```
+
+---
+
+## Data Types
+
+| Type | Example | Description |
+|------|---------|-------------|
+| `int` | `42`, `-5` | Integer numbers |
+| `float` | `3.14`, `-0.5` | Floating point numbers |
+| `string` | `"Hello"` | Text strings |
+| `bool` | `true`, `false` | Boolean values |
+| `void` | N/A | No value (null) |
+| `array` | `[]` | List of values |
+| `object` | `{}` | Key-value pairs |
+
+### Type Checks
+```scheme
+[isInt 42]     # true
+[isFloat 3.14] # true
+[isString "hi"] # true
+[isBool true]   # true
+```
+
+---
+
+## Variables
+
+### Declaration with Type Annotation
+```scheme
+[set x: int 42]
+[set name: string "Alice"]
+[set pi: float 3.14159]
+[set active: bool true]
+```
+
+### Without Type Annotation (Dynamic)
+```scheme
+[set x 42]      # auto int
+[set y "hello"] # auto string
+```
+
+### Variable Access
+```scheme
+[set x 10]
+[println x]  # 10
+```
+
+### Variable Assignment
+```scheme
+[set x 10]
+[set x 20]  # reassign
+```
+
+---
+
+## Operators
+
+### Arithmetic
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `add` | Addition | `[add 5 3]` → 8 |
+| `sub` | Subtraction | `[sub 5 3]` → 2 |
+| `mult` | Multiplication | `[mult 5 3]` → 15 |
+| `div` | Division | `[div 10 2]` → 5 |
+| `rem` | Remainder | `[rem 10 3]` → 1 |
+| `pow` | Power | `[pow 2 3]` → 8 |
+
+### Comparison
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `lt` | Less than | `[lt 5 3]` → false |
+| `gt` | Greater than | `[gt 5 3]` → true |
+| `le` | Less or equal | `[le 5 5]` → true |
+| `ge` | Greater or equal | `[ge 5 3]` → true |
+| `eq` | Equal | `[eq 5 5]` → true |
+| `neq` | Not equal | `[neq 5 3]` → true |
+
+### Mathematical Functions
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `floor` | Round down | `[floor 3.9]` → 3 |
+| `ceil` | Round up | `[ceil 3.1]` → 4 |
+| `round` | Round to nearest | `[round 3.5]` → 4 |
+| `sqrt` | Square root | `[sqrt 16]` → 4.0 |
+
+### Logical
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `and` | Logical AND | `[and true true]` → true |
+| `or` | Logical OR | `[or true false]` → true |
+| `not` | Logical NOT | `[not true]` → false |
+
+---
+
+## Control Flow
+
+### If Statement
+```scheme
+[if condition
+  [println "True branch"]
+]
+
+# With else
+[if condition
+  [println "True"]
+  [else [println "False"]]
+]
+
+# Multi-line
+[if [lt x 10]
+  [println "x is less than 10"]
+  [else [println "x is 10 or more"]]]
+```
+
+### While Loop
+```scheme
+[set i 0]
+[while [lt i 5]
+  [println i]
+  [set i [add i 1]]]
+```
+
+### For Loop
+```scheme
+[for [set i 0] [lt i 10] [set i [add i 1]]
+  [println i]]
+```
+
+---
+
+## Functions
+
+### Defining Functions
+```scheme
+# Single parameter
+[def square x
+  [mult x x]]
+
+# Multiple parameters (as list)
+[def add [a b]
+  [add a b]]
+
+# With type annotations
+[def greet [name: string]
+  [str-join " " ["Hello" name]]]
+```
+
+### Calling Functions
+```scheme
+[set result [square 5]]  # 25
+[set sum [add 3 4]]      # 7
+[println [greet "Alice"]] # Hello Alice
+```
+
+### Built-in Functions
+```scheme
+[println "text"]     # Print with newline
+[print "text"]       # Print without newline
+[read]               # Read input from stdin
+```
+
+---
+
+## Arrays
+
+### Creating Arrays
+```scheme
+[set arr []]              # empty array
+[set arr [1 2 3]]        # with values
+[set arr ["a" "b" "c"]]  # mixed types allowed
+```
+
+### Array Operations
+```scheme
+[array-push arr 4]      # Add element
+[set val [array-pop arr]] # Remove and return last
+[array-get arr 0]       # Get element at index
+[array-set arr 0 100]   # Set element at index
+[array-length arr]      # Get length
+```
+
+### Array Functions
+```scheme
+[set arr []]
+[array-push arr "apple"]
+[array-push arr "banana"]
+[array-push arr "orange"]
+
+[println [array-get arr 0]]  # apple
+[println [array-length arr]] # 3
+```
+
+---
+
+## Objects
+
+### Creating Objects
+```scheme
+[set obj {}]                # empty object
+[set person {"name" "John" "age" 30}]  # with values
+```
+
+### Object Operations
+```scheme
+[obj-set person "name" "Alice"]   # Set key/value
+[obj-get person "name"]           # Get value by key
+[obj-keys person]                 # Get all keys
+```
+
+### Object Example
+```scheme
+[set user {}]
+[obj-set user "name" "John"]
+[obj-set user "age" 30]
+[obj-set user "email" "john@test.com"]
+
+[println [obj-get user "name"]]  # John
+[println [obj-keys user]]        # [name age email]
+```
+
+---
+
+## File I/O
+
+### Reading Files
+```scheme
+[file-read "data.txt"]       # Returns file content as string
+[file-exists "file.txt"]     # Check if file exists
+```
+
+### Writing Files
+```scheme
+[file-write "output.txt" "Hello World"]   # Overwrite
+[file-append "log.txt" "New entry"]       # Append to file
+```
+
+### Directory Operations
+```scheme
+[dir-list "."]               # List directory contents
+[dir-create "newfolder"]     # Create directory
+```
+
+### File Example
+```scheme
+[set data [file-read "config.json"]]
+[if [file-exists "config.json"]
+  [println "Config loaded successfully"]
+  [else [println "Config file not found"]]]
+```
+
+---
+
+## System Commands
+
+### Shell Commands
+```scheme
+[shell "echo Hello"]         # Execute command, return output
+[shell-status "mkdir dir"]   # Execute command, return exit code
+```
+
+### Examples
+```scheme
+# Execute system command
+[set output [shell "ls -la"]]
+[println output]
+
+# Check command success
+[set code [shell-status "ping google.com"]]
+[if [eq code 0]
+  [println "Ping succeeded"]
+  [else [println "Ping failed"]]]
+```
+
+---
+
+## HTTP Client
+
+### GET Request
+```scheme
+[http-get "https://api.example.com/data"]
+```
+
+### POST Request
+```scheme
+[http-post "https://api.example.com/submit" "{\"key\":\"value\"}"]
+```
+
+### With Headers
+```scheme
+[set headers {"Authorization" "Bearer token"}]
+[set response [http-get "https://api.example.com/data" headers]]
+```
+
+### Response Object
+```scheme
+[set response [http-get "https://httpbin.org/get"]]
+[println [obj-get response "status"]]      # 200
+[println [obj-get response "body"]]        # Response body
+[set headers [obj-get response "headers"]]
+[println [obj-get headers "content-type"]] # Content type
+```
+
+---
+
+## JSON Operations
+
+### Parse JSON
+```scheme
+[set jsonStr "{\"name\":\"John\",\"age\":30}"]
+[set data [json-parse jsonStr]]
+[println [obj-get data "name"]]  # John
+```
+
+### Stringify JSON
+```scheme
+[set obj {"name" "Alice" "age" 25}]
+[set json [json-stringify obj]]
+[println json]  # {"name":"Alice","age":25}
+```
+
+### Real Example
+```scheme
+# Parse API response
+[set response [http-get "https://api.github.com/users/nim-lang"]]
+[set data [json-parse [obj-get response "body"]]]
+[println "User: " [obj-get data "login"]]
+[println "Bio: " [obj-get data "bio"]]
+```
+
+---
+
+## String Operations
+
+### Join Strings
+```scheme
+[str-join ", " ["apple" "banana" "orange"]]  # "apple, banana, orange"
+```
+
+### Split Strings
+```scheme
+[str-split "hello,world,test" ","]  # ["hello", "world", "test"]
+```
+
+### String Length
+```scheme
+[str-length "Hello"]  # 5
+```
+
+### Examples
+```scheme
+[set words [str-split "one two three" " "]]
+[println [str-join " - " words]]  # one - two - three
+[println [str-length "Hello"]]    # 5
+```
+
+---
+
+## Time Functions
+
+### Get Current Time
+```scheme
+[set now [time-now]]
+[println [obj-get now "year"]]   # 2024
+[println [obj-get now "month"]]  # 12
+[println [obj-get now "day"]]    # 25
+[println [obj-get now "hour"]]   # 14
+[println [obj-get now "unix"]]   # 1703512800
+```
+
+### Sleep
+```scheme
+[sleep 1000]  # Sleep for 1000ms (1 second)
+```
+
+### Time Object Fields
+- `year` - Year (int)
+- `month` - Month (1-12)
+- `day` - Day of month (1-31)
+- `hour` - Hour (0-23)
+- `minute` - Minute (0-59)
+- `second` - Second (0-59)
+- `weekday` - Day of week (0-6)
+- `unix` - Unix timestamp
+
+---
+
+## Environment Variables
+
+### Get Environment Variable
+```scheme
+[env-get "PATH"]    # Get PATH
+[env-get "HOME"]    # Get HOME directory
+```
+
+### Set Environment Variable
+```scheme
+[env-set "MY_VAR" "Hello World"]
+[set value [env-get "MY_VAR"]]
+[println value]  # Hello World
+```
+
+---
+
+## Error Handling
+
+### Try/Catch
+```scheme
+[try
+  [set result [div 10 0]]
+  [catch err
+    [println "Error caught: " err]]]
+```
+
+### Error Example
+```scheme
+[try
+  [file-read "does_not_exist.txt"]
+  [catch err
+    [println "Could not read file: " err]
+    [println "Continuing with default..."]]]
+```
+
+---
+
+## REPL Commands
+
+When running `jonrod` without arguments, you get an interactive REPL:
+
+```
+> help    # Show commands
+> env     # Show current environment
+> clear   # Clear all variables
+> exit    # Exit REPL
+> ast     # Show AST before evaluation
+```
+
+### REPL Example
+```bash
+$ jonrod
+JohnRod REPL - Type expressions to evaluate (Ctrl+C to exit)
+Type 'help' for commands
+
+> [set x 42]
+> [println x]
+42
+> env
+Variables:
+  x = 42
+> exit
+Goodbye!
+```
+
+---
+
+## Command Line Options
+
+| Option | Description |
+|--------|-------------|
+| `-h, --help` | Show help message |
+| `-v, --version` | Show version |
+| `-e, --eval` | Evaluate expression directly |
+| `-d, --dump` | Dump AST before execution |
+| `-c, --check` | Check syntax only |
+| `--no-color` | Disable colored output |
+
+### Examples
+```bash
+jonrod --help
+jonrod -e '[println "Hello"]'
+jonrod -d script.jr
+jonrod -c script.jr
+```
+
+---
+
+## Full Example Script
+
+```scheme
+# test.jr - Complete example
+
+[println "=== JonRod Example ==="]
+
+# Variables
+[set name: string "John"]
+[set age: int 30]
+[set scores: array [85 92 78]]
+
+# Conditionals
+[if [gt age 18]
+  [println name " is an adult"]
+  [else [println name " is a minor"]]]
+
+# Loop
+[set i 0]
+[while [lt i [array-length scores]]
+  [println "Score " i ": " [array-get scores i]]
+  [set i [add i 1]]]
+
+# Function
+[def average [nums]
+  [set sum 0]
+  [set i 0]
+  [while [lt i [array-length nums]]
+    [set sum [add sum [array-get nums i]]]
+    [set i [add i 1]]]
+  [div sum [array-length nums]]]
+
+[set avg [average scores]]
+[println "Average: " avg]
+
+# File I/O
+[file-write "output.txt" [str-join "\n" scores]]
+[set content [file-read "output.txt"]]
+[println "File content: " content]
+
+# HTTP
+[set response [http-get "https://httpbin.org/get"]]
+[println "Status: " [obj-get response "status"]]
+
+# JSON
+[set data [json-parse [obj-get response "body"]]]
+[println "URL: " [obj-get [obj-get data "url"] "url"]]
+
+# Environment
+[set home [env-get "HOME"]]
+[println "Home: " home]
+
+[println "=== Done ==="]
+```
+
+---
+
+## Error Messages
+
+JonRod provides informative error messages with line numbers:
+
+```
+Error at line 10: Division by zero
+[div 10 0]
+         ^
+```
+
+---
+
+## Tips & Best Practices
+
+1. **Use type annotations** for clarity: `[set x: int 42]`
+2. **Group related operations** in functions
+3. **Handle errors** with `try`/`catch`
+4. **Use arrays and objects** for structured data
+5. **Check file existence** before reading
+6. **Use `shell-status`** to check command success
+7. **Parse JSON responses** from APIs
+8. **Use environment variables** for configuration
+
+---
+
+## License & Credits
+
+JohnRod - A Fast Dynamic Language Interpreter
+Built with Rust
+Inspired by Lisp and modern scripting languages
