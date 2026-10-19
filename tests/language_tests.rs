@@ -166,3 +166,127 @@ fn test_try_catch() {
     "#;
     assert_eq!(eval_str(code).unwrap(), Value::new_string("caught error"));
 }
+
+#[test]
+fn test_typed_variables() {
+    // Valid declarations
+    assert_eq!(eval_str("[set x|int 42] x").unwrap(), Value::new_int(42));
+    assert_eq!(eval_str("[set f|float 3.14] f").unwrap(), Value::new_float(3.14));
+    assert_eq!(eval_str("[set s|string \"hello\"] s").unwrap(), Value::new_string("hello"));
+    assert_eq!(eval_str("[set b|bool true] b").unwrap(), Value::new_bool(true));
+    assert_eq!(eval_str("[set arr|array [1 2 3]] [array-length arr]").unwrap(), Value::new_int(3));
+
+    // Spaced syntax
+    assert_eq!(eval_str("[set y | int 100] y").unwrap(), Value::new_int(100));
+
+    // Initial mismatch fails
+    let err = eval_str("[set x|int \"not an int\"]").unwrap_err();
+    assert!(err.contains("Type mismatch for 'x': expected int, got string"));
+
+    let err2 = eval_str("[set f|float \"not a float\"]").unwrap_err();
+    assert!(err2.contains("Type mismatch for 'f': expected float, got string"));
+}
+
+#[test]
+fn test_permanent_type_enforcement() {
+    // Re-assignment conforming to type succeeds
+    let ok_code = r#"
+        [set x|int 10]
+        [set x 20]
+        x
+    "#;
+    assert_eq!(eval_str(ok_code).unwrap(), Value::new_int(20));
+
+    // Re-assignment violating type fails
+    let bad_code = r#"
+        [set x|int 10]
+        [set x "bad string"]
+    "#;
+    let err = eval_str(bad_code).unwrap_err();
+    assert!(err.contains("Type mismatch for 'x': expected int, got string"));
+
+    // Re-declaration with same type succeeds
+    let redecl_same = r#"
+        [set x|int 10]
+        [set x|int 30]
+        x
+    "#;
+    assert_eq!(eval_str(redecl_same).unwrap(), Value::new_int(30));
+
+    // Re-declaration with different type fails
+    let redecl_diff = r#"
+        [set x|int 10]
+        [set x|string "not allowed"]
+    "#;
+    let err2 = eval_str(redecl_diff).unwrap_err();
+    assert!(err2.contains("Cannot re-declare variable 'x' of type int as string"));
+
+    // Dynamic variable without type allows reassignment across types
+    let dyn_code = r#"
+        [set d 10]
+        [set d "now a string"]
+        d
+    "#;
+    assert_eq!(eval_str(dyn_code).unwrap(), Value::new_string("now a string"));
+}
+
+#[test]
+fn test_typed_functions() {
+    // Multi-parameter typed function
+    let code = r#"
+        [def my_add [a|int b|int]
+            [add a b]]
+        [my_add 15 25]
+    "#;
+    assert_eq!(eval_str(code).unwrap(), Value::new_int(40));
+
+    // Call with invalid argument type fails
+    let bad_call = r#"
+        [def my_add [a|int b|int]
+            [add a b]]
+        [my_add 15 "25"]
+    "#;
+    let err = eval_str(bad_call).unwrap_err();
+    assert!(err.contains("Type mismatch for parameter 'b': expected int, got string"));
+
+    // Single typed parameter function
+    let single_param = r#"
+        [def square x|int
+            [mult x x]]
+        [square 8]
+    "#;
+    assert_eq!(eval_str(single_param).unwrap(), Value::new_int(64));
+
+    let single_bad = r#"
+        [def square x|int
+            [mult x x]]
+        [square "eight"]
+    "#;
+    assert!(eval_str(single_bad).is_err());
+
+    // Permanent type enforcement within function body
+    let body_enforce = r#"
+        [def bad_mutate [x|int]
+            [set x "not an int"]
+            x]
+        [bad_mutate 42]
+    "#;
+    let err_body = eval_str(body_enforce).unwrap_err();
+    assert!(err_body.contains("Type mismatch for 'x': expected int, got string"));
+}
+
+#[test]
+fn test_dropped_colon_and_object_colons() {
+    // Old colon syntax for types is rejected with clear error
+    let old_set = "[set x: int 42]";
+    let err = eval_str(old_set).unwrap_err();
+    assert!(err.contains("Unexpected colon ':' at line 1. Type annotations must use pipe '|' (e.g. x|int)"));
+
+    // Object literals with colon key-value separator still work
+    let obj_code = r#"
+        [set user {"name": "Bob", "age": 28}]
+        [obj-get user "name"]
+    "#;
+    assert_eq!(eval_str(obj_code).unwrap(), Value::new_string("Bob"));
+}
+

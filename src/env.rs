@@ -13,6 +13,7 @@ pub struct FunctionDef {
 
 pub struct Environment {
     pub vars: FxHashMap<String, Value>,
+    pub types: FxHashMap<String, String>,
     pub funcs: FxHashMap<String, FunctionDef>,
     pub parent: Option<Rc<RefCell<Environment>>>,
 }
@@ -21,6 +22,7 @@ impl Environment {
     pub fn new() -> Self {
         Self {
             vars: FxHashMap::default(),
+            types: FxHashMap::default(),
             funcs: FxHashMap::default(),
             parent: None,
         }
@@ -29,6 +31,7 @@ impl Environment {
     pub fn with_parent(parent: Rc<RefCell<Environment>>) -> Self {
         Self {
             vars: FxHashMap::default(),
+            types: FxHashMap::default(),
             funcs: FxHashMap::default(),
             parent: Some(parent),
         }
@@ -48,6 +51,22 @@ impl Environment {
         self.vars.insert(name, val);
     }
 
+    #[inline(always)]
+    pub fn lookup_type(&self, name: &str) -> Option<String> {
+        if let Some(ty) = self.types.get(name) {
+            return Some(ty.clone());
+        }
+        if let Some(ref p) = self.parent {
+            return p.borrow().lookup_type(name);
+        }
+        None
+    }
+
+    #[inline(always)]
+    pub fn set_type(&mut self, name: String, ty: String) {
+        self.types.insert(name, ty);
+    }
+
     pub fn lookup_func(&self, name: &str) -> Option<FunctionDef> {
         if let Some(f) = self.funcs.get(name) {
             return Some(f.clone());
@@ -64,6 +83,7 @@ impl Environment {
 
     pub fn clear(&mut self) {
         self.vars.clear();
+        self.types.clear();
         self.funcs.clear();
         self.parent = None;
     }

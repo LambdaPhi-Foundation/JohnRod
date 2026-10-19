@@ -116,12 +116,12 @@ jonrod
 
 ## Variables
 
-### Declaration with Type Annotation
+### Declaration with Type Annotation (Tied to Variable)
 ```scheme
-[set x: int 42]
-[set name: string "Alice"]
-[set pi: float 3.14159]
-[set active: bool true]
+[set x|int 42]
+[set name|string "Alice"]
+[set pi|float 3.14159]
+[set active|bool true]
 ```
 
 ### Without Type Annotation (Dynamic)
@@ -232,7 +232,7 @@ jonrod
   [add a b]]
 
 # With type annotations
-[def greet [name: string]
+[def greet [name|string]
   [str-join " " ["Hello" name]]]
 ```
 
@@ -572,9 +572,9 @@ jonrod -c script.jr
 [println "=== JonRod Example ==="]
 
 # Variables
-[set name: string "John"]
-[set age: int 30]
-[set scores: array [85 92 78]]
+[set name|string "John"]
+[set age|int 30]
+[set scores|array [85 92 78]]
 
 # Conditionals
 [if [gt age 18]
@@ -635,7 +635,7 @@ Error at line 10: Division by zero
 
 ## Tips & Best Practices
 
-1. **Use type annotations** for clarity: `[set x: int 42]`
+1. **Use type annotations** for clarity and enforcement: `[set x|int 42]`
 2. **Group related operations** in functions
 3. **Handle errors** with `try`/`catch`
 4. **Use arrays and objects** for structured data

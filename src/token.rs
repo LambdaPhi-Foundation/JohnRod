@@ -10,6 +10,7 @@ pub enum TokenType {
 
     // Operators & Punctuation
     Colon,  // :
+    Pipe,   // |
     Comma,  // ,
     Period, // .
 

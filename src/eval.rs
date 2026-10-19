@@ -186,6 +186,11 @@ impl Evaluator {
                 }
             }
 
+            ExprKind::TypedId(name, ty) => Err(format!(
+                "Unexpected type annotation '|{}' on variable '{}' at line {}. Type annotations can only be used in variable declarations or function parameters",
+                ty, name, expr.line
+            )),
+
             ExprKind::Array(elements) => {
                 let mut vals = Vec::with_capacity(elements.len());
                 for el in elements {
@@ -265,6 +270,11 @@ impl Evaluator {
                             local_env
                                 .borrow_mut()
                                 .set_var(param_name.clone(), arg_values[i].clone());
+                            if let Some(ref ptype) = func_def.param_types[i] {
+                                local_env
+                                    .borrow_mut()
+                                    .set_type(param_name.clone(), ptype.clone());
+                            }
                         }
 
                         let old_env = Rc::clone(&self.env);
@@ -317,56 +327,54 @@ impl Evaluator {
         match builtin {
             // ------- Variable Operations ----------
             Builtin::Set => {
-                if args.len() < 2 {
+                if args.len() != 2 {
                     return Err(
-                        "Usage: [set name value] or [set name: type value]".to_string()
+                        "Usage: [set name value] or [set name|type value]".to_string()
                     );
                 }
 
-                let mut var_name = match &args[0].kind {
-                    ExprKind::Id(s) => s.clone(),
-                    _ => return Err("Variable name must be an identifier".to_string()),
+                let (var_name, declared_type) = match &args[0].kind {
+                    ExprKind::Id(s) => (s.clone(), None),
+                    ExprKind::TypedId(name, ty) => (name.clone(), Some(ty.clone())),
+                    _ => {
+                        return Err(
+                            "Variable name must be an identifier or typed identifier (e.g. x|int)".to_string()
+                        )
+                    }
                 };
 
-                let mut expected_type = String::new();
-                let mut value_index = 1;
-
-                // Case 1: [set x: int 42] where 'x:' has trailing colon
-                if var_name.ends_with(':') {
-                    var_name.pop();
-                    if args.len() >= 2 {
-                        if let ExprKind::Id(ref t) = args[1].kind {
-                            expected_type = t.clone();
-                            value_index = 2;
+                let existing_type = self.env.borrow().lookup_type(&var_name);
+                let (target_type, is_new_type) = match (existing_type, declared_type) {
+                    (Some(existing), Some(new_decl)) => {
+                        if existing != new_decl {
+                            return Err(format!(
+                                "Cannot re-declare variable '{}' of type {} as {}",
+                                var_name, existing, new_decl
+                            ));
                         }
+                        (existing, false)
                     }
-                }
-                // Case 2: [set x : int 42]
-                else if args.len() >= 3 {
-                    if let ExprKind::Id(ref colon) = args[1].kind {
-                        if colon == ":" {
-                            if let ExprKind::Id(ref t) = args[2].kind {
-                                expected_type = t.clone();
-                                value_index = 3;
-                            }
-                        }
-                    }
-                }
+                    (Some(existing), None) => (existing, false),
+                    (None, Some(new_decl)) => (new_decl, true),
+                    (None, None) => (String::new(), false),
+                };
 
-                if value_index >= args.len() {
-                    return Err("Expected value for set".to_string());
-                }
+                let val = self.eval(&args[1])?;
 
-                let val = self.eval(&args[value_index])?;
-
-                if !expected_type.is_empty() && !val.check_type(&expected_type) {
+                if !target_type.is_empty() && !val.check_type(&target_type) {
                     return Err(format!(
-                        "Type mismatch: expected {}, got {}",
-                        expected_type,
+                        "Type mismatch for '{}': expected {}, got {}",
+                        var_name,
+                        target_type,
                         val.type_name()
                     ));
                 }
 
+                if is_new_type {
+                    self.env
+                        .borrow_mut()
+                        .set_type(var_name.clone(), target_type);
+                }
                 self.env.borrow_mut().set_var(var_name, val.clone());
                 Ok(val)
             }
@@ -463,48 +471,32 @@ impl Evaluator {
                         params.push(p.clone());
                         param_types.push(None);
                     }
+                    ExprKind::TypedId(p, t) => {
+                        params.push(p.clone());
+                        param_types.push(Some(t.clone()));
+                    }
                     ExprKind::List(children) => {
-                        let mut i = 0;
-                        while i < children.len() {
-                            if let ExprKind::Id(ref p) = children[i].kind {
-                                if p == ":" {
-                                    i += 1;
-                                    continue;
+                        for child in children {
+                            match &child.kind {
+                                ExprKind::Id(p) => {
+                                    params.push(p.clone());
+                                    param_types.push(None);
                                 }
-                                let mut param_name = p.clone();
-                                let mut param_type = None;
-
-                                if param_name.ends_with(':') {
-                                    param_name.pop();
-                                    if i + 1 < children.len() {
-                                        if let ExprKind::Id(ref t) = children[i + 1].kind {
-                                            param_type = Some(t.clone());
-                                            i += 1;
-                                        }
-                                    }
-                                } else if i + 2 < children.len() {
-                                    if let ExprKind::Id(ref colon) = children[i + 1].kind {
-                                        if colon == ":" {
-                                            if let ExprKind::Id(ref t) = children[i + 2].kind {
-                                                param_type = Some(t.clone());
-                                                i += 2;
-                                            }
-                                        }
-                                    }
+                                ExprKind::TypedId(p, t) => {
+                                    params.push(p.clone());
+                                    param_types.push(Some(t.clone()));
                                 }
-                                params.push(param_name);
-                                param_types.push(param_type);
-                            } else {
-                                return Err(
-                                    "Parameter names must be identifiers".to_string()
-                                );
+                                _ => {
+                                    return Err(
+                                        "Parameter names must be identifiers or typed identifiers (e.g. x|int)".to_string()
+                                    );
+                                }
                             }
-                            i += 1;
                         }
                     }
                     _ => {
                         return Err(
-                            "Parameters must be an identifier or list: [p q r]".to_string()
+                            "Parameters must be an identifier, typed identifier, or list: [p|int q|float r]".to_string()
                         )
                     }
                 }

@@ -97,12 +97,12 @@ In the original JohnRod interpreter, built-in features bloated the runtime with 
 ### 4.1 Native Functions & Variables
 ```scheme
 # Typed variable declaration
-[set x: int 100]
-[set pi: float 3.14159]
-[set flag: bool true]
+[set x|int 100]
+[set pi|float 3.14159]
+[set flag|bool true]
 
 # Native function definition with typed signatures
-[def add_mul [a: int b: int c: int] -> int
+[def add_mul [a|int b|int c|int] -> int
   [mult [add a b] c]]
 
 # Function invocation
@@ -247,7 +247,7 @@ flowchart TD
 ```
 
 ### Milestone 1: Core Scanner & Linear IR
-- Parse bracket syntax with optional type annotations: `[set name: int val]`, `[def name [a: int b: int] -> int ...]`.
+- Parse bracket syntax with optional type annotations: `[set name|int val]`, `[def name [a|int b|int] -> int ...]`.
 - Translate AST directly into Linear IR instructions:
   - `IR_CONST_INT`, `IR_CONST_FLOAT`, `IR_LOAD_VAR`, `IR_STORE_VAR`
   - `IR_ADD`, `IR_SUB`, `IR_MUL`, `IR_DIV`

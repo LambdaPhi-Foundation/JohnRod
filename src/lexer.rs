@@ -187,6 +187,10 @@ impl<'a> Lexer<'a> {
                 self.advance();
                 Ok(Token::new(TokenType::Colon, ":".to_string(), line, col))
             }
+            b'|' => {
+                self.advance();
+                Ok(Token::new(TokenType::Pipe, "|".to_string(), line, col))
+            }
             b',' => {
                 self.advance();
                 Ok(Token::new(TokenType::Comma, ",".to_string(), line, col))

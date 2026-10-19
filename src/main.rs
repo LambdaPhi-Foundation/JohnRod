@@ -286,6 +286,18 @@ fn main() {
         match tokenize(&eval_expr) {
             Ok(tokens) => match parse(tokens) {
                 Ok(ast) => {
+                    if dump {
+                        println!("=== Abstract Syntax Tree ===");
+                        for node in &ast {
+                            dump_ast(node, 0);
+                        }
+                        println!("============================");
+                    }
+                    if check {
+                        println!("Syntax check passed");
+                        return;
+                    }
+
                     let mut ev = Evaluator::new();
                     for node in &ast {
                         match ev.eval(node) {

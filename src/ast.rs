@@ -5,6 +5,7 @@ pub enum ExprKind {
     String(String),
     Bool(bool),
     Id(String),
+    TypedId(String, String),
     List(Vec<Expr>),
     Array(Vec<Expr>),
     Object(Vec<(Expr, Expr)>),
@@ -33,6 +34,7 @@ pub fn dump_ast(expr: &Expr, indent: usize) {
         ExprKind::String(v) => println!("{}Str: {}", space, v),
         ExprKind::Bool(v) => println!("{}Bool: {}", space, v),
         ExprKind::Id(v) => println!("{}Id: {}", space, v),
+        ExprKind::TypedId(name, ty) => println!("{}TypedId: {}|{}", space, name, ty),
         ExprKind::List(children) => {
             println!("{}List:", space);
             for child in children {

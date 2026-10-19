@@ -147,12 +147,35 @@ impl Parser {
 
             TokenType::Ident => {
                 let t = self.consume();
-                Ok(Expr::new(ExprKind::Id(t.value), t.line, t.column))
+                self.skip_comments_and_commas();
+                if self.peek().kind == TokenType::Pipe {
+                    self.consume(); // consume '|'
+                    self.skip_comments_and_commas();
+                    let type_tok = self.expect(TokenType::Ident, "Expected type name after '|'")?;
+                    Ok(Expr::new(
+                        ExprKind::TypedId(t.value, type_tok.value),
+                        t.line,
+                        t.column,
+                    ))
+                } else {
+                    Ok(Expr::new(ExprKind::Id(t.value), t.line, t.column))
+                }
             }
 
             TokenType::Colon => {
                 let t = self.consume();
-                Ok(Expr::new(ExprKind::Id(":".to_string()), t.line, t.column))
+                Err(format!(
+                    "Unexpected colon ':' at line {}. Type annotations must use pipe '|' (e.g. x|int)",
+                    t.line
+                ))
+            }
+
+            TokenType::Pipe => {
+                let t = self.consume();
+                Err(format!(
+                    "Unexpected pipe '|' at line {}. Pipe is used for type annotations on identifiers (e.g. x|int)",
+                    t.line
+                ))
             }
 
             TokenType::Comment => {
